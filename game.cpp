@@ -6,8 +6,10 @@ float player_1_pos, player_1_dpos, player_2_pos, player_2_dpos;
 float arena_half_size_x = 85, arena_half_size_y = 45;
 float player_half_size_x = 2.5;
 float player_half_size_y = 12;
-float ball_pos_x, ball_pos_y, ball_dpos_x = 100, ball_dpos_y;
+float ball_pos_x, ball_pos_y, ball_dpos_x = 160, ball_dpos_y;
 float ball_half_size = 1;
+
+int player_1_score, player_2_score;
 
 internal void 
 simulate_player(float *pos, float *dpos, float ddpos, float dt) {
@@ -49,8 +51,14 @@ simulate_game(Input* input, float dt) {
 
 	// Player 2
 	float player_2_ddpos = 0.f;
+#if 0
 	if (is_down(BUTTON_UP)) player_2_ddpos += 2000;
 	if (is_down(BUTTON_DOWN)) player_2_ddpos -= 2000;
+#else
+	player_2_ddpos = (ball_pos_y - player_2_pos) * 100;
+	if (player_2_ddpos > 500) player_2_ddpos = 500;
+	if (player_2_ddpos < -500) player_2_ddpos = -500;
+#endif
 
 	player_2_ddpos -= player_2_dpos * 10.f;
 
@@ -66,32 +74,50 @@ simulate_game(Input* input, float dt) {
 			-80, player_1_pos, player_half_size_x, player_half_size_y)) {
 			ball_pos_x = -80 + player_half_size_x + ball_half_size;
 			ball_dpos_x *= -1;
-			ball_dpos_y = (ball_pos_y - player_1_pos) * 2;
+			ball_dpos_y = (ball_pos_y - player_1_pos) * 5;
 		}
 		else if (aabb_vs_aabb(ball_pos_x, ball_pos_y, ball_half_size, ball_half_size,
 			80, player_2_pos, player_half_size_x, player_half_size_y)) {
 			ball_pos_x = 80 - player_half_size_x - ball_half_size;
 			ball_dpos_x *= -1;
-			ball_dpos_y = (ball_pos_y - player_2_pos) * 2;
+			ball_dpos_y = (ball_pos_y - player_2_pos) * 8;
 		}
 
 		// Collision with arena
+		//Top wall
 		if (ball_pos_y + ball_half_size > arena_half_size_y) {
 			ball_pos_y = arena_half_size_y - ball_half_size;
 			ball_dpos_y *= -1;
 		}
+		// Bottom wall
 		else if (ball_pos_y - ball_half_size < -arena_half_size_y) {
 			ball_pos_y = -arena_half_size_y + ball_half_size;
 			ball_dpos_y *= -1;
 		}
-
+		// Right wall
 		if (ball_pos_x + ball_half_size > arena_half_size_x) {
 			ball_pos_x = arena_half_size_x - ball_half_size;
 			ball_dpos_x *= -1;
+			player_1_score++;
 		}
+		// Left wall
 		else if (ball_pos_x - ball_half_size < -arena_half_size_x) {
 			ball_pos_x = -arena_half_size_x + ball_half_size;
 			ball_dpos_x *= -1;
+			player_2_score++;
+		}
+
+		// Render score
+		float at_x = -80;
+		for (int i = 0; i < player_1_score; i++) {
+			draw_rect(at_x, 47.f, 1.f, 1.f, 0xaaaaaa);
+			at_x += 2.5f;
+		}
+
+		at_x = 80;
+		for (int i = 0; i < player_2_score; i++) {
+			draw_rect(at_x, 47.f, 1.f, 1, 0xaaaaaa);
+			at_x -= 2.5f;
 		}
 	}
 
